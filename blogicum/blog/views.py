@@ -1,6 +1,7 @@
 from datetime import datetime as dt
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -20,7 +21,7 @@ def filter_published_posts(queryset):
             is_published=True,
             category__is_published=True,
             pub_date__lte=dt.now(),
-        )
+        ).annotate(comment_count=Count('comment')).order_by('-pub_date')
     )
 
 
@@ -60,7 +61,12 @@ class ProfileListView(ListView):
         author = get_object_or_404(User, username=self.kwargs['username'])
         post_list = filter_published_posts(author.post)
         if self.request.user == author:
-            post_list = author.post.all()
+            post_list = (
+                author.post
+                .select_related('location', 'category', 'author')
+                .annotate(comment_count=Count('comment'),)
+                .order_by('-pub_date')
+            )
         return post_list
 
     def get_context_data(self, **kwargs):

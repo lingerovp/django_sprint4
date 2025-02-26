@@ -93,10 +93,6 @@ class Post(PublishedAndDateModel):
     def __str__(self):
         return self.title
 
-    @property
-    def comment_count(self):
-        return self.comment.count()
-
 
 class Comment(PublishedAndDateModel):
     text = models.TextField('Текст')
