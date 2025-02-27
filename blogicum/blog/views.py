@@ -21,13 +21,16 @@ def filter_published_posts(queryset):
             is_published=True,
             category__is_published=True,
             pub_date__lte=dt.now(),
-        ).annotate(comment_count=Count('comment')).order_by('-pub_date')
+        )
     )
 
 
 class IndexListView(ListView):
     model = Post
-    queryset = filter_published_posts(Post.objects)
+    queryset = (
+        filter_published_posts(Post.objects)
+        .annotate(comment_count=Count('comment')).order_by('-pub_date')
+    )
     template_name = 'blog/index.html'
     paginate_by = PAGINATE_BY
 
@@ -44,7 +47,10 @@ class CategoryPostListView(ListView):
             slug=category_slug,
             is_published=True,
         )
-        return filter_published_posts(self.category.post)
+        return (
+            filter_published_posts(self.category.post)
+            .annotate(comment_count=Count('comment')).order_by('-pub_date')
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -59,7 +65,10 @@ class ProfileListView(ListView):
 
     def get_queryset(self, queryset=None):
         author = get_object_or_404(User, username=self.kwargs['username'])
-        post_list = filter_published_posts(author.post)
+        post_list = (
+            filter_published_posts(author.post)
+            .annotate(comment_count=Count('comment')).order_by('-pub_date')
+        )
         if self.request.user == author:
             post_list = (
                 author.post

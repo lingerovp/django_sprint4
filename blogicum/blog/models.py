@@ -115,4 +115,4 @@ class Comment(PublishedAndDateModel):
         ordering = ('created_at',)
 
     def __str__(self):
-        return self.post
+        return self.text
